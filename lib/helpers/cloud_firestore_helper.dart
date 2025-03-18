@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_pad_1/models/message_model.dart';
 import 'package:flutter_pad_1/models/post_model.dart';
 
 class CloudFirestoreHelper {
@@ -66,5 +67,30 @@ Stream<QuerySnapshot<Map<String, dynamic>>> getChatsStream(String userId) {
       .where('participants', arrayContains: userId)
       .snapshots();
 }
+Stream<List<MessageModel>> getMessagesStream(String chatId) {
+  return FirebaseFirestore.instance
+      .collection('Chats')
+      .doc(chatId)
+      .collection('messages')
+      .orderBy('timestamp', descending: true) // Order messages by timestamp
+      .snapshots()
+      .map((snapshot) => snapshot.docs
+          .map((doc) => MessageModel.fromMap(doc.data()))
+          .toList());
+}
+Future<void> sendMessage(String chatId, MessageModel message) async {
+  try {
+    await FirebaseFirestore.instance
+        .collection('Chats')
+        .doc(chatId)
+        .collection('messages')
+        .add(message.toMap());
+  } catch (e) {
+    print('Error sending message: $e');
+  }
+}
+
+
+
 
 }

@@ -20,8 +20,8 @@ class _NavigationScreenState extends State<NavigationScreen> {
     HomeScreen(),
     const SearchScreen(),
     const AddScreen(),
-    // const ChatListScreen(),
-    const UploadMockDataScreen(),
+    const ChatListScreen(),
+    //const UploadMockDataScreen(),
     ProfileScreen()
   ]; // Screen Lst
 

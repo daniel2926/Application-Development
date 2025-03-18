@@ -1,0 +1,70 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_pad_1/models/post_model.dart';
+
+class CloudFirestoreHelper {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> getPostsStream() {
+    return _firestore.collection('posts').snapshots();
+  }
+  Stream<DocumentSnapshot<Map<String, dynamic>>> getOnePost(String postId) {
+    return _firestore.collection('posts').doc(postId).snapshots();
+  }
+  Future<void> uploadPost(PostModel post) async {
+  try {
+    await _firestore.collection('posts').doc(post.postId).set({
+  'postId': post.postId,
+  'title': post.title,
+  'description': post.description,
+  'price': post.price,
+  'images': post.images,
+  'sellerId': post.sellerId,
+  'sellerName': post.sellerName,
+  'location': GeoPoint(
+    post.location.latitude,
+    post.location.longitude,
+  ),
+  'isAvailable': post.isAvailable,
+  'createdAt': post.createdAt,
+});
+  } catch (e) {
+    throw Exception('Error uploading post: $e');
+  }
+}
+  Future<void> deletePost(String postId) async {
+    try {
+      await _firestore.collection('posts').doc(postId).delete();
+      print('Post with ID $postId has been successfully deleted.');
+    } catch (e) {
+      print('Error deleting post: $e');
+      // Handle errors appropriately in your application
+    }
+  }
+   Future<void> updatePost({
+    required String postId,
+    required String title,
+    required String description,
+    required double price,
+    required List<String> images,
+  }) async {
+    try {
+      await _firestore.collection('posts').doc(postId).update({
+        'title': title,
+        'description': description,
+        'price': price,
+        'images': images,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      print('Post updated successfully.');
+    } catch (e) {
+      print('Error updating post: $e');
+    }
+  }
+Stream<QuerySnapshot<Map<String, dynamic>>> getChatsStream(String userId) {
+  return FirebaseFirestore.instance
+      .collection('chats')
+      .where('participants', arrayContains: userId)
+      .snapshots();
+}
+
+}

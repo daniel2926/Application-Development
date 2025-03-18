@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "550834663300",
+    "project_id": "renewmarket-efafd",
+    "storage_bucket": "renewmarket-efafd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:550834663300:android:599eb9d63e3a96bd8ab7d1",
+        "android_client_info": {
+          "package_name": "com.example.flutter_pad_1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB3RmwgCfH2SQUAY9S4svFLZPJqLdQEmOA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

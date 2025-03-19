@@ -3,16 +3,17 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_pad_1/helpers/cloud_firestore_helper.dart';
 import 'package:flutter_pad_1/models/chat_model.dart';
-import 'package:flutter_pad_1/providers/user_provider.dart';
+import 'package:flutter_pad_1/screens/chat_detail_screen.dart';
 import 'package:flutter_pad_1/widgets/time_ago.dart';
 import 'package:provider/provider.dart';
+ // Import chat detail screen
 
 class ChatListScreen extends StatelessWidget {
   const ChatListScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-       final user = FirebaseAuth.instance.currentUser;
+    final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Chats')),
@@ -64,7 +65,16 @@ class ChatListScreen extends StatelessWidget {
                         ? Text(timeAgo(chat.lastMessage!.timestamp))
                         : null,
                     onTap: () {
-                      // Navigate to chat details screen
+                      // Navigasi ke halaman detail chat
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ChatScreen(
+                            chatId: chat.id, // Kirim ID obrolan
+                            title: chat.title,  // Kirim judul obrolan
+                          ),
+                        ),
+                      );
                     },
                   ),
                   const Divider(thickness: 1, color: Colors.grey),

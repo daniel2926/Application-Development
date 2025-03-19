@@ -16,7 +16,7 @@ class ChatScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(title)), // Set AppBar title
+      appBar: AppBar(title: Text(title)), // Gunakan judul dari daftar chat
       body: Column(
         children: [
           Expanded(
@@ -24,16 +24,16 @@ class ChatScreen extends StatelessWidget {
               stream: CloudFirestoreHelper().getMessagesStream(chatId),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator()); // Loading indicator
+                  return const Center(child: CircularProgressIndicator());
                 }
 
                 if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}')); // Show error message
+                  return Center(child: Text('Error: ${snapshot.error}'));
                 }
 
                 final messages = snapshot.data ?? [];
                 if (messages.isEmpty) {
-                  return const Center(child: Text('No messages yet.')); // Show if no messages
+                  return const Center(child: Text('No messages yet.'));
                 }
 
                 final currentUserId = Provider.of<AuthenticationProvider>(
@@ -42,40 +42,68 @@ class ChatScreen extends StatelessWidget {
                 ).user?.uid;
 
                 return ListView.builder(
-                  reverse: true, // Display latest messages at the bottom
+                  reverse: true,
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
                     final message = messages[index];
                     final isSentByMe = message.senderId == currentUserId;
 
-                    return Align(
-                      alignment: isSentByMe ? Alignment.centerRight : Alignment.centerLeft,
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: isSentByMe ? Colors.blue : Colors.grey[300],
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              message.content,
-                              style: TextStyle(
-                                color: isSentByMe ? Colors.white : Colors.black,
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                      child: Row(
+                        mainAxisAlignment:
+                            isSentByMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+                        children: [
+                          if (!isSentByMe) ...[
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.grey,
                               ),
+                              child: const Icon(Icons.person_outline, color: Colors.white),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              timeAgo(message.timestamp),
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isSentByMe ? Colors.white70 : Colors.black54,
-                              ),
-                            ),
+                            const SizedBox(width: 8),
                           ],
-                        ),
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: isSentByMe ? Colors.blue : Colors.grey[300],
+                                borderRadius: BorderRadius.only(
+                                  topLeft: const Radius.circular(16),
+                                  topRight: const Radius.circular(16),
+                                  bottomLeft: isSentByMe
+                                      ? const Radius.circular(16)
+                                      : const Radius.circular(4),
+                                  bottomRight: isSentByMe
+                                      ? const Radius.circular(4)
+                                      : const Radius.circular(16),
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    message.content,
+                                    style: TextStyle(
+                                      color: isSentByMe ? Colors.white : Colors.black,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    timeAgo(message.timestamp),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: isSentByMe ? Colors.white70 : Colors.black54,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     );
                   },
@@ -86,11 +114,5 @@ class ChatScreen extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _formatTimestamp(Timestamp? timestamp) {
-    if (timestamp == null) return '';
-    final DateTime date = timestamp.toDate();
-    return '${date.hour}:${date.minute}'; // Format HH:mm
   }
 }

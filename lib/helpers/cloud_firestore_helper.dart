@@ -67,17 +67,28 @@ Stream<QuerySnapshot<Map<String, dynamic>>> getChatsStream(String userId) {
       .where('participants', arrayContains: userId)
       .snapshots();
 }
-Stream<List<MessageModel>> getMessagesStream(String chatId) {
-  return FirebaseFirestore.instance
-      .collection('Chats')
-      .doc(chatId)
-      .collection('messages')
-      .orderBy('timestamp', descending: true) // Order messages by timestamp
-      .snapshots()
-      .map((snapshot) => snapshot.docs
-          .map((doc) => MessageModel.fromMap(doc.data()))
-          .toList());
-}
+// Stream<List<MessageModel>> getMessagesStream(String chatId) {
+//   return FirebaseFirestore.instance
+//       .collection('Chats')
+//       .doc(chatId)
+//       .collection('messages')
+//       .orderBy('timestamp', descending: true) // Or  der messages by timestamp
+//       .snapshots()
+//       .map((snapshot) => snapshot.docs
+//           .map((doc) => MessageModel.fromMap(doc.data()))
+//           .toList());
+// }
+ Stream<List<MessageModel>> getMessagesStream(String chatId) {
+    return _firestore
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages') // Subkoleksi
+        .orderBy('timestamp', descending: true) // Urutkan berdasarkan timestamp
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) => MessageModel.fromMap(doc.data())).toList();
+        });
+  }
 Future<void> sendMessage(String chatId, MessageModel message) async {
   try {
     await FirebaseFirestore.instance

@@ -92,7 +92,7 @@ Stream<QuerySnapshot<Map<String, dynamic>>> getChatsStream(String userId) {
 Future<void> sendMessage(String chatId, MessageModel message) async {
   try {
     await FirebaseFirestore.instance
-        .collection('Chats')
+        .collection('chats')
         .doc(chatId)
         .collection('messages')
         .add(message.toMap());

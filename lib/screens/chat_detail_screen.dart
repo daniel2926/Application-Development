@@ -6,22 +6,67 @@ import 'package:flutter_pad_1/providers/auth_provider.dart';
 import 'package:flutter_pad_1/widgets/time_ago.dart';
 import 'package:provider/provider.dart';
 
-
-class ChatScreen extends StatelessWidget {
+class ChatScreen extends StatefulWidget {
   final String chatId;
   final String title;
 
   const ChatScreen({super.key, required this.chatId, required this.title});
 
   @override
+  State<ChatScreen> createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends State<ChatScreen> {
+  final TextEditingController _messageController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+
+  void _sendMessage(String chatId) async {
+    // Ensure the message input is not empty
+    if (_messageController.text.trim().isEmpty) return;
+
+    // Retrieve the current user's ID from AuthenticationProvider
+    final userId = Provider.of<AuthenticationProvider>(
+      context,
+      listen: false,
+    ).user?.uid;
+
+    // If no user is logged in, do not proceed
+    if (userId == null) return;
+
+    // Create a new message object using the MessageModel
+    final newMessage = MessageModel(
+      content: _messageController.text.trim(),
+      senderId: userId,
+      timestamp: Timestamp.now(),
+    );
+
+    try {
+      // Send the message to Firestore using CloudFirestoreHelper
+      await CloudFirestoreHelper().sendMessage(chatId, newMessage);
+
+      // Clear the input field after sending the message
+      _messageController.clear();
+
+      // Scroll to the latest message
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    } catch (error) {
+      print('Failed to send message: $error');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(title)), // Gunakan judul dari daftar chat
+      appBar: AppBar(title: Text(widget.title)),
       body: Column(
         children: [
           Expanded(
             child: StreamBuilder<List<MessageModel>>(
-              stream: CloudFirestoreHelper().getMessagesStream(chatId),
+              stream: CloudFirestoreHelper().getMessagesStream(widget.chatId),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -42,6 +87,7 @@ class ChatScreen extends StatelessWidget {
                 ).user?.uid;
 
                 return ListView.builder(
+                  controller: _scrollController,  // Attach the ScrollController
                   reverse: true,
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
@@ -49,10 +95,12 @@ class ChatScreen extends StatelessWidget {
                     final isSentByMe = message.senderId == currentUserId;
 
                     return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 6, horizontal: 8),
                       child: Row(
-                        mainAxisAlignment:
-                            isSentByMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+                        mainAxisAlignment: isSentByMe
+                            ? MainAxisAlignment.end
+                            : MainAxisAlignment.start,
                         children: [
                           if (!isSentByMe) ...[
                             Container(
@@ -62,7 +110,8 @@ class ChatScreen extends StatelessWidget {
                                 shape: BoxShape.circle,
                                 color: Colors.grey,
                               ),
-                              child: const Icon(Icons.person_outline, color: Colors.white),
+                              child: const Icon(Icons.person_outline,
+                                  color: Colors.white),
                             ),
                             const SizedBox(width: 8),
                           ],
@@ -70,7 +119,9 @@ class ChatScreen extends StatelessWidget {
                             child: Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: isSentByMe ? Colors.blue : Colors.grey[300],
+                                color: isSentByMe
+                                    ? Colors.blue
+                                    : Colors.grey[300],
                                 borderRadius: BorderRadius.only(
                                   topLeft: const Radius.circular(16),
                                   topRight: const Radius.circular(16),
@@ -88,7 +139,9 @@ class ChatScreen extends StatelessWidget {
                                   Text(
                                     message.content,
                                     style: TextStyle(
-                                      color: isSentByMe ? Colors.white : Colors.black,
+                                      color: isSentByMe
+                                          ? Colors.white
+                                          : Colors.black,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
@@ -96,7 +149,9 @@ class ChatScreen extends StatelessWidget {
                                     timeAgo(message.timestamp),
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: isSentByMe ? Colors.white70 : Colors.black54,
+                                      color: isSentByMe
+                                          ? Colors.white70
+                                          : Colors.black54,
                                     ),
                                   ),
                                 ],
@@ -110,6 +165,40 @@ class ChatScreen extends StatelessWidget {
                 );
               },
             ),
+          ),
+          _buildMessageInputField(widget.chatId),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMessageInputField(String chatId) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        border: Border(top: BorderSide(color: Colors.grey.shade300)),
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.attach_file),
+            onPressed: () {
+              // Implement file attachment
+            },
+          ),
+          Expanded(
+            child: TextField(
+              controller: _messageController,
+              decoration: const InputDecoration(
+                hintText: "Type a message...",
+                border: InputBorder.none,
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.send, color: Colors.blueAccent),
+            onPressed: () => _sendMessage(chatId),
           ),
         ],
       ),

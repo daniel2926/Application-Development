@@ -31,7 +31,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _reviewController = TextEditingController();
-  final GlobalKey<StarRatingWidgetState> _starRatingKey = GlobalKey<StarRatingWidgetState>();
+  int _rating = 0;
 
   void _sendMessage(String chatId) async {
     // Ensure the message input is not empty
@@ -71,10 +71,10 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  Future<void> _submitReview(BuildContext context, String sellerId, double rating, String review) async {
+ Future<void> _submitReview(BuildContext context, String sellerId, int rating, String review) async {
     if (rating == 0 || review.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please provide a rating and review.")),
+        const SnackBar(content: Text("Please provide a rating and a review.")),
       );
       return;
     }
@@ -95,13 +95,17 @@ class _ChatScreenState extends State<ChatScreen> {
         sellerId: sellerId,
         reviewerId: userId,
         reviewerName: userName,
-        rating: rating,
+        rating: rating.toDouble(),
         comment: review,
       );
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Review submitted successfully!")),
       );
+
+      // Reset fields after submission
+      _rating = 0;
+      _reviewController.clear();
       Navigator.of(context).pop();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -112,37 +116,72 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _showReviewModal() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Submit Review"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-           StarRatingWidget(key: _starRatingKey,),
-            TextField(
-              controller: _reviewController,
-              decoration: const InputDecoration(hintText: "Write your review..."),
-              maxLines: 3,
+  showDialog(
+    context: context,
+    builder: (context) {
+      int tempRating = _rating; // Simpan rating sementara untuk modal
+      return StatefulBuilder(
+        builder: (context, setModalState) {
+          return AlertDialog(
+            title: const Text("Submit Review"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Widget Star Rating
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(5, (index) {
+                    return IconButton(
+                      onPressed: () {
+                        setModalState(() {
+                          tempRating = index + 1;
+                        });
+                      },
+                      icon: Icon(
+                        index < tempRating ? Icons.star : Icons.star_border,
+                        color: Colors.orange,
+                        size: 36,
+                      ),
+                    );
+                  }),
+                ),
+                TextField(
+                  controller: _reviewController,
+                  decoration: const InputDecoration(
+                    hintText: "Write your review...",
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 3,
+                ),
+              ],
             ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            
-            onPressed: () { 
-                          int rating = _starRatingKey.currentState?.rating ?? 0;
-              _submitReview(context, widget.otherParticipantId,rating.toDouble(), _reviewController.text);},
-            child: const Text("Submit"),
-          ),
-        ],
-      ),
-    );
-  }
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text("Cancel"),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _rating = tempRating; // Update nilai rating utama
+                  });
+                  _submitReview(
+                    context,
+                    widget.otherParticipantId,
+                    _rating,
+                    _reviewController.text,
+                  );
+                },
+                child: const Text("Complete"),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -379,7 +418,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.send, color: Colors.blueAccent),
+            icon: const Icon(Icons.send, color: Colors.green),
             onPressed: () => _sendMessage(chatId),
           ),
         ],

@@ -6,14 +6,18 @@ import 'package:provider/provider.dart';
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
+  Future<double> fetchAverageRating(String userId) async {
+    // Simulate fetching data from Firestore or any database
+    await Future.delayed(Duration(seconds: 2)); // Simulating network delay
+    return 4.2; // Example average rating value
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Fetch user provider
     final userProvider = Provider.of<UserProvider>(context);
 
-    // Trigger loading of user data when the widget is first built
     if (userProvider.user.name.isEmpty) {
-      userProvider.loadUser(); // Ensure user data is loaded if it's empty
+      userProvider.loadUser();
     }
 
     return DefaultTabController(
@@ -46,8 +50,41 @@ class ProfileScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        userProvider.user.name, // Safely access the user's name now
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        userProvider.user.name,
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 10),
+                      FutureBuilder<double>(
+                        future: fetchAverageRating(userProvider.user.userId),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return const CircularProgressIndicator();
+                          }
+                          if (snapshot.hasError) {
+                            return const Text("Error fetching rating");
+                          }
+
+                          double averageRating = snapshot.data ?? 0.0;
+                          return Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.star,
+                                color: Colors.orange,
+                                size: 24,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                averageRating.toStringAsFixed(1),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -60,7 +97,7 @@ class ProfileScreen extends StatelessWidget {
                     Tab(text: "Reviews"),
                   ],
                 ),
-                 Expanded(
+                Expanded(
                   child: TabBarView(
                     children: [
                       MySalesTab(),
@@ -77,5 +114,3 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 }
-
-

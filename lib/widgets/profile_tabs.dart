@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_pad_1/helpers/cloud_firestore_helper.dart';
 import 'package:flutter_pad_1/models/post_model.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_pad_1/providers/user_provider.dart';
@@ -105,14 +106,82 @@ class FavoritesTab extends StatelessWidget {
   }
 }
 
+ // Adjust based on your file structure
 
 class ReviewsTab extends StatelessWidget {
   const ReviewsTab({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text('Reviews'),
+    final userProvider = Provider.of<UserProvider>(context);
+    final userId = userProvider.user.userId;
+
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: CloudFirestoreHelper().fetchUserReviews(userId), // Directly calling the method you provided
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return const Center(
+            child: Text("Error fetching reviews. Please try again."),
+          );
+        }
+
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(
+            child: Text("No reviews available."),
+          );
+        }
+
+        // Data is available
+        final reviews = snapshot.data!;
+
+        return ListView.builder(
+          itemCount: reviews.length,
+          itemBuilder: (context, index) {
+            final review = reviews[index];
+            return Card(
+              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      review['reviewerName'] ?? 'Anonymous',
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: List.generate(
+                        5,
+                        (i) => Icon(
+                          Icons.star,
+                          color: i < (review['rating'] ?? 0)
+                              ? Colors.orange
+                              : Colors.grey,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(review['comment'] ?? 'No comment'),
+                    const SizedBox(height: 6),
+                    Text(
+                      "Reviewed on: ${review['timestamp']?.toDate().toString().split(' ')[0] ?? 'N/A'}",
+                      style: const TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
+

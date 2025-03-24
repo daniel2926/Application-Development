@@ -208,7 +208,7 @@ Future<List<Map<String, dynamic>>> fetchUserReviews(String userId) async {
   try {
     // Reference to the reviews subcollection for the specified userId
     final querySnapshot = await FirebaseFirestore.instance
-        .collection('Users')
+        .collection('users')
         .doc(userId)
         .collection('reviews')
         .orderBy('timestamp', descending: true)
@@ -225,7 +225,7 @@ Future<double> fetchAverageRating(String userId) async {
   try {
     // Reference to the reviews subcollection for the specified userId
     final querySnapshot = await FirebaseFirestore.instance
-        .collection('Users')
+        .collection('users')
         .doc(userId)
         .collection('reviews')
         .get();

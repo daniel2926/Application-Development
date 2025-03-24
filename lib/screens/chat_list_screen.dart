@@ -71,7 +71,9 @@ class ChatListScreen extends StatelessWidget {
                         MaterialPageRoute(
                           builder: (context) => ChatScreen(
                             chatId: chat.id, // Kirim ID obrolan
-                            title: chat.title,  // Kirim judul obrolan
+                            title: chat.title,
+                            postId: chat.postId ?? '',
+                            otherParticipantId: userId,  // Kirim judul obrolan
                           ),
                         ),
                       );

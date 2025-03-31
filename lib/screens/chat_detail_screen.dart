@@ -34,42 +34,50 @@ class _ChatScreenState extends State<ChatScreen> {
   int _rating = 0;
 
   void _sendMessage(String chatId) async {
-    // Ensure the message input is not empty
-    if (_messageController.text.trim().isEmpty) return;
+  // Pastikan pesan tidak kosong
+  if (_messageController.text.trim().isEmpty) return;
 
-    // Retrieve the current user's ID from AuthenticationProvider
-    final userId = Provider.of<AuthenticationProvider>(
-      context,
-      listen: false,
-    ).user?.uid;
+  // Ambil userId dari AuthenticationProvider
+  final userId = Provider.of<AuthenticationProvider>(
+    context,
+    listen: false,
+  ).user?.uid;
 
-    // If no user is logged in, do not proceed
-    if (userId == null) return;
+  // Jika user tidak login, hentikan
+  if (userId == null) return;
 
-    // Create a new message object using the MessageModel
-    final newMessage = MessageModel(
-      content: _messageController.text.trim(),
-      senderId: userId,
-      timestamp: Timestamp.now(),
-    );
+  // Buat objek MessageModel
+  final newMessage = MessageModel(
+    content: _messageController.text.trim(),
+    senderId: userId,
+    timestamp: Timestamp.now(),
+  );
 
-    try {
-      // Send the message to Firestore using CloudFirestoreHelper
-      await CloudFirestoreHelper().sendMessage(chatId, newMessage);
+  try {
+    // Kirim pesan ke Firestore
+    await CloudFirestoreHelper().sendMessage(chatId, newMessage);
 
-      // Clear the input field after sending the message
-      _messageController.clear();
+    // Perbarui lastMessage di Firestore
+    await FirebaseFirestore.instance.collection('chats').doc(chatId).update({
+      'lastMessage': newMessage.toMap(), // Simpan lastMessage sebagai Map
+    });
 
-      // Scroll to the latest message
+    // Bersihkan input setelah mengirim pesan
+    _messageController.clear();
+
+    // Scroll ke pesan terbaru
+    Future.delayed(const Duration(milliseconds: 300), () {
       _scrollController.animateTo(
         _scrollController.position.maxScrollExtent,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
-    } catch (error) {
-      print('Failed to send message: $error');
-    }
+    });
+  } catch (error) {
+    print('Failed to send message: $error');
   }
+}
+
 
  Future<void> _submitReview(BuildContext context, String sellerId, int rating, String review) async {
     if (rating == 0 || review.isEmpty) {
@@ -186,7 +194,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
+      appBar: AppBar(title: Text(widget.title )),
       body: FutureBuilder<Map<String, dynamic>?>(
         future: CloudFirestoreHelper().fetchPostData(widget.postId),
         builder: (context, snapshot) {

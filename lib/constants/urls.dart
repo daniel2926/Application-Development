@@ -20,3 +20,7 @@ const String postImg9 =
     "https://raw.githubusercontent.com/devSWF/MicroLearnable-Resources/refs/heads/main/Practical%20Application%20Project/Assets/Images/post_image9.png";
 const String defalutImg =
     "https://raw.githubusercontent.com/devSWF/MicroLearnable-Resources/refs/heads/main/Practical%20Application%20Project/Assets/Images/default_image.png";
+const String boxAnimation =
+    "https://raw.githubusercontent.com/devSWF/MicroLearnable-Resources/refs/heads/main/Practical%20Application%20Project/Assets/Images/box_animation.json";
+const String mapAnimation =
+    "https://raw.githubusercontent.com/devSWF/MicroLearnable-Resources/refs/heads/main/Practical%20Application%20Project/Assets/Images/map_animation.json";

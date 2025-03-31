@@ -9,6 +9,7 @@ import 'package:flutter_pad_1/screens/profile_screen.dart';
 import 'package:flutter_pad_1/screens/search_screen.dart';
 import 'package:flutter_pad_1/screens/sign_in_screen.dart';
 import 'package:flutter_pad_1/screens/sign_up_sreen.dart';
+import 'package:flutter_pad_1/screens/splash_screen.dart';
 import 'package:flutter_pad_1/widgets/post_card.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -61,7 +62,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home : const SignInScreen(),
+      home : const SplashScreen(),
     );
   }
 }

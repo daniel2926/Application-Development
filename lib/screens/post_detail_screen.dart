@@ -8,6 +8,8 @@ import 'package:flutter_pad_1/providers/post_provider.dart';
 import 'package:flutter_pad_1/providers/user_provider.dart';
 import 'package:flutter_pad_1/screens/chat_detail_screen.dart';
 import 'package:flutter_pad_1/screens/post_edit_screen.dart';
+import 'package:flutter_pad_1/widgets/get_address.dart';
+import 'package:flutter_pad_1/widgets/map_preview.dart';
 import 'package:flutter_pad_1/widgets/time_ago.dart';
 import 'package:provider/provider.dart';
 
@@ -95,6 +97,7 @@ class PostDetailScreen extends StatelessWidget {
   void _startChat(BuildContext context, String sellerId, String buyerId,
       String postId) async {
     try {
+      // Ambil data seller dari koleksi "users" bukan "posts"
       DocumentSnapshot<Map<String, dynamic>> sellerSnapshot =
           await FirebaseFirestore.instance
               .collection('users')
@@ -102,8 +105,11 @@ class PostDetailScreen extends StatelessWidget {
               .get();
 
       String sellerName = sellerSnapshot.exists
-          ? (sellerSnapshot.data()?['name'] ?? "Unknown")
+          ? (sellerSnapshot.data()?['name'] ??
+              "Unknown") // Sesuaikan dengan field nama seller di Firestore
           : "Unknown";
+
+      print("ini seller name nya : ${sellerName}");
 
       // Get or create chat room
       String chatId = await CloudFirestoreHelper().getOrCreateChatRoom(
@@ -203,16 +209,37 @@ class PostDetailScreen extends StatelessWidget {
                 /// Preferred Location Section
                 Row(
                   children: [
-                    const Icon(Icons.location_on, size: 24, color: Colors.red),
+                    const Icon(Icons.location_on_outlined),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Text(
-                        locationText,
-                        style: const TextStyle(fontSize: 16),
+                      child: FutureBuilder<String>(
+                        future: getAddress(
+                            post.location.latitude, post.location.longitude),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Text("Loading...",
+                                style: TextStyle(
+                                    fontSize: 16, fontStyle: FontStyle.italic));
+                          } else if (snapshot.hasError) {
+                            return const Text("Failed to load address",
+                                style:
+                                    TextStyle(fontSize: 16, color: Colors.red));
+                          } else if (!snapshot.hasData ||
+                              snapshot.data!.isEmpty) {
+                            return const Text("Unknown location",
+                                style: TextStyle(fontSize: 16));
+                          }
+                          return Text(snapshot.data!,
+                              style: const TextStyle(fontSize: 16));
+                        },
                       ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 8),
+
+                MapPreview(location: post.location),
                 const Divider(thickness: 1),
 
                 /// Seller Information
@@ -245,10 +272,6 @@ class PostDetailScreen extends StatelessWidget {
           bottomNavigationBar: Consumer2<UserProvider, PostProvider>(
             builder: (context, userProvider, postProvider, child) {
               final currentUser = userProvider.user;
-              if (userProvider.user.name.isEmpty) {
-                userProvider
-                    .loadUser(); // Ensure user data is loaded if it's empty
-              }
 
               if (currentUser == null) {
                 return const SizedBox(

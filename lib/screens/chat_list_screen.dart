@@ -9,6 +9,34 @@ import 'package:flutter_pad_1/widgets/time_ago.dart';
 
 class ChatListScreen extends StatelessWidget {
   const ChatListScreen({super.key});
+  
+
+  Future<String> getUserName(String userId) async {
+    try {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+      if (userDoc.exists) {
+        return userDoc.data()?['name'] ?? 'Unknown';
+      }
+    } catch (e) {
+      print('Error fetching user name: $e');
+    }
+    return 'Unknown';
+  }
+  Future<String> resolveChatTitle(String currentUserId, String buyerId, String postId) async {
+    try {
+      final postDoc = await FirebaseFirestore.instance.collection('posts').doc(postId).get();
+      if (!postDoc.exists) return 'Unknown';
+
+      final sellerId = postDoc.data()?['sellerId'];
+      final isBuyer = currentUserId == buyerId;
+      final otherUserId = isBuyer ? sellerId : buyerId;
+
+      return await getUserName(otherUserId);
+    } catch (e) {
+      print('Error resolving chat title: $e');
+      return 'Unknown';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,35 +101,42 @@ class ChatListScreen extends StatelessWidget {
 
                   return Column(
                     children: [
-                      ListTile(
-                        leading: CircleAvatar(
-                          radius: 24,
-                          backgroundColor: Colors.grey[300],
-                          child: const Icon(Icons.person, color: Colors.white),
-                        ),
-                        title: Text(
-                          chat.title,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: Text(
-                          lastMessageText,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        trailing: lastMessageTimestamp != null
-                            ? Text(timeAgo(lastMessageTimestamp))
-                            : null,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ChatScreen(
-                                chatId: chat.id,
-                                title: chat.title,
-                                postId: chat.postId ?? '',
-                                otherParticipantId: userId,
-                              ),
+                      FutureBuilder<String>(
+                        future: resolveChatTitle(userId, chat.participants.last, chat.postId ?? ''),
+                        builder: (context, titleSnapshot) {
+                          final chatTitle = titleSnapshot.data ?? 'Loading...';
+
+                          return ListTile(
+                            leading: CircleAvatar(
+                              radius: 24,
+                              backgroundColor: Colors.grey[300],
+                              child: const Icon(Icons.person, color: Colors.white),
                             ),
+                            title: Text(
+                              chatTitle,
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Text(
+                              lastMessageText,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            trailing: lastMessageTimestamp != null
+                                ? Text(timeAgo(lastMessageTimestamp))
+                                : null,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ChatScreen(
+                                    chatId: chat.id,
+                                    title: chatTitle,
+                                    postId: chat.postId ?? '',
+                                    otherParticipantId: userId,
+                                  ),
+                                ),
+                              );
+                            },
                           );
                         },
                       ),
